@@ -12,6 +12,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Root route for testing if the app is live
+@app.get("/")
+def read_root():
+    return {"message": "FastAPI Cashflow API is running!"}
+
+# Predict cashflow route
 @app.get("/predict_cashflow")
 def predict_cashflow():
     # Example static data; later we will replace this with real ML predictions
@@ -22,3 +28,8 @@ def predict_cashflow():
             {"month": "November", "cashflow": 1600}
         ]
     }
+
+# Optional: Health check route
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
