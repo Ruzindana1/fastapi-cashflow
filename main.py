@@ -1,5 +1,6 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import pickle
 import pandas as pd
 
@@ -10,7 +11,7 @@ origins = ["*"]  # For production, replace "*" with your WordPress domain
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -24,22 +25,25 @@ MONTH_NAMES = [
     "July", "August", "September", "October", "November", "December"
 ]
 
+# Pydantic model for POST requests
+class CashflowRequest(BaseModel):
+    months: list[int]  # e.g., [9, 10, 11]
+
 @app.get("/")
 def read_root():
     return {"message": "FastAPI Cashflow API is running!"}
 
-@app.get("/predict_cashflow")
-def predict_cashflow(months: str = Query("9,10,11", description="Comma-separated month indices, 1-12")):
+@app.post("/predict_cashflow")
+def predict_cashflow(request: CashflowRequest):
     """
     Predict cashflow for given months.
-    Example: /predict_cashflow?months=9,10,11
+    Accepts POST JSON like:
+    {
+        "months": [9, 10, 11]
+    }
     """
 
-    # Parse months from query parameter
-    try:
-        month_indices = [int(m) for m in months.split(",")]
-    except ValueError:
-        return {"error": "Invalid month indices. Must be comma-separated integers 1-12."}
+    month_indices = request.months
 
     # Validate month indices
     for m in month_indices:
