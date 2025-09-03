@@ -1,10 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import pickle
+import pandas as pd
 
 app = FastAPI()
 
 # Allow your WordPress site to access this API
-origins = ["*"]  # For security, replace "*" with your WordPress domain in production
+origins = ["*"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -12,24 +14,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Root route for testing if the app is live
+# Load the dummy model
+with open("cashflow_model.pkl", "rb") as f:
+    model = pickle.load(f)
+
 @app.get("/")
 def read_root():
     return {"message": "FastAPI Cashflow API is running!"}
 
-# Predict cashflow route
 @app.get("/predict_cashflow")
 def predict_cashflow():
-    # Example static data; later we will replace this with real ML predictions
-    return {
-        "predictions": [
-            {"month": "September", "cashflow": 1200},
-            {"month": "October", "cashflow": 1450},
-            {"month": "November", "cashflow": 1600}
-        ]
-    }
+    # Dummy input for the next 3 months
+    input_data = pd.DataFrame({"month_index": [9, 10, 11]})
+    predictions = model.predict(input_data)
 
-# Optional: Health check route
+    month_names = ["September", "October", "November"]
+    response = [{"month": m, "cashflow": float(c)} for m, c in zip(month_names, predictions)]
+    return {"predictions": response}
+
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
